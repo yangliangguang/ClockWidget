@@ -584,6 +584,7 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
     QAction* yuanbaoAction = menu.addAction(style()->standardIcon(QStyle::SP_DialogYesButton), QStringLiteral("打开元宝"));
     menu.addSeparator();
     QAction* settingsAction = menu.addAction(style()->standardIcon(QStyle::SP_FileDialogDetailedView), QStringLiteral("设置"));
+    QAction* shutdownAction = menu.addAction(style()->standardIcon(QStyle::SP_TitleBarCloseButton), QStringLiteral("关闭电脑"));
     menu.addSeparator();
     QAction* exitAction = menu.addAction(style()->standardIcon(QStyle::SP_DialogCloseButton), QStringLiteral("退出"));
     
@@ -741,6 +742,22 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
         SettingsDialog dialog(this);
         if (dialog.exec() == QDialog::Accepted) {
             reloadWeatherSettings();
+        }
+    });
+    
+    connect(shutdownAction, &QAction::triggered, [this]() {
+        // 显示确认对话框
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this, 
+            QStringLiteral("确认关闭电脑"),
+            QStringLiteral("您确定要关闭电脑吗？\n\n注意：请确保已保存所有重要工作。"),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::No
+        );
+        
+        if (reply == QMessageBox::Yes) {
+            // 执行关机命令
+            QProcess::startDetached("shutdown", QStringList() << "/s" << "/t" << "0");
         }
     });
     

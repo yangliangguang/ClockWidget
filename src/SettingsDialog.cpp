@@ -14,9 +14,13 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     , m_okButton(nullptr)
     , m_cancelButton(nullptr)
     , m_startupGroup(nullptr)
+    , m_weatherGroup(nullptr)
+    , m_cityCodeEdit(nullptr)
+    , m_cityCodeLabel(nullptr)
+    , m_cityCodeHintLabel(nullptr)
 {
     setWindowTitle(QStringLiteral("设置"));
-    setFixedSize(400, 150);
+    setFixedSize(450, 280);
     setModal(true);
     
     setupUI();
@@ -40,6 +44,24 @@ void SettingsDialog::setupUI()
     
     mainLayout->addWidget(m_startupGroup);
     
+    // 天气设置组
+    m_weatherGroup = new QGroupBox(QStringLiteral("天气设置"), this);
+    QVBoxLayout *weatherLayout = new QVBoxLayout(m_weatherGroup);
+    
+    m_cityCodeLabel = new QLabel(QStringLiteral("城市编码:"), this);
+    m_cityCodeEdit = new QLineEdit(this);
+    m_cityCodeEdit->setPlaceholderText(QStringLiteral("请输入城市编码，如：101210408"));
+    
+    m_cityCodeHintLabel = new QLabel(QStringLiteral("提示：可在 http://t.weather.itboy.net/api/weather/city/城市编码 查询"), this);
+    m_cityCodeHintLabel->setStyleSheet("color: gray; font-size: 10px;");
+    m_cityCodeHintLabel->setWordWrap(true);
+    
+    weatherLayout->addWidget(m_cityCodeLabel);
+    weatherLayout->addWidget(m_cityCodeEdit);
+    weatherLayout->addWidget(m_cityCodeHintLabel);
+    
+    mainLayout->addWidget(m_weatherGroup);
+    
     // 按钮布局
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     m_okButton = new QPushButton(QStringLiteral("确定"), this);
@@ -62,6 +84,11 @@ void SettingsDialog::loadSettings()
     // 检查当前开机自启动状态
     bool autoStartEnabled = isAutoStartEnabled();
     m_autoStartCheckBox->setChecked(autoStartEnabled);
+    
+    // 加载天气城市编码设置
+    QSettings settings;
+    QString cityCode = settings.value("weather/cityCode", "101210408").toString(); // 默认杭州
+    m_cityCodeEdit->setText(cityCode);
 }
 
 void SettingsDialog::saveSettings()
@@ -69,6 +96,15 @@ void SettingsDialog::saveSettings()
     // 保存开机自启动设置
     bool autoStart = m_autoStartCheckBox->isChecked();
     setAutoStart(autoStart);
+    
+    // 保存天气城市编码设置
+    QSettings settings;
+    QString cityCode = m_cityCodeEdit->text().trimmed();
+    if (cityCode.isEmpty()) {
+        cityCode = "101210408"; // 默认杭州
+    }
+    settings.setValue("weather/cityCode", cityCode);
+    settings.sync();
 }
 
 void SettingsDialog::onOkClicked()

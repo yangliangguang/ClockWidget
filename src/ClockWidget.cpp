@@ -66,6 +66,7 @@ ClockWidget::ClockWidget(QWidget* parent)
     createTrayMenu();
     
     // 初始化天气相关
+    loadWeatherSettings();
     
     // 创建天气浏览器组件
     m_weatherBrowser = new QTextBrowser(this);
@@ -738,7 +739,9 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
     
     connect(settingsAction, &QAction::triggered, [this]() {
         SettingsDialog dialog(this);
-        dialog.exec();
+        if (dialog.exec() == QDialog::Accepted) {
+            reloadWeatherSettings();
+        }
     });
     
     connect(exitAction, &QAction::triggered, this, &QWidget::close);
@@ -906,7 +909,9 @@ void ClockWidget::createTrayMenu()
     m_settingsAction = new QAction(style()->standardIcon(QStyle::SP_FileDialogDetailedView), tr("设置"), this);
     connect(m_settingsAction, &QAction::triggered, [this]() {
         SettingsDialog dialog(this);
-        dialog.exec();
+        if (dialog.exec() == QDialog::Accepted) {
+            reloadWeatherSettings();
+        }
     });
     
     m_exitAction = new QAction(style()->standardIcon(QStyle::SP_DialogCloseButton), tr("退出"), this);
@@ -980,7 +985,9 @@ void ClockWidget::closeEvent(QCloseEvent* event)
 
 void ClockWidget::updateWeatherData()
 {
-    QUrl url("http://t.weather.itboy.net/api/weather/city/101210408");
+    QString cityCode = getCityCodeFromSettings();
+    QString urlString = QString("http://t.weather.itboy.net/api/weather/city/%1").arg(cityCode);
+    QUrl url(urlString);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::UserAgentHeader, "ClockWidget/1.0");
     
@@ -1095,4 +1102,26 @@ void ClockWidget::onWeatherDataReceived()
     // 触发界面重绘
     update();
     reply->deleteLater();
+}
+
+void ClockWidget::loadWeatherSettings()
+{
+    // 从设置中加载天气相关配置
+    QSettings settings;
+    QString cityCode = settings.value("weather/cityCode", "101210408").toString();
+    // 可以在这里添加其他天气相关的设置加载
+}
+
+QString ClockWidget::getCityCodeFromSettings()
+{
+    QSettings settings;
+    return settings.value("weather/cityCode", "101210408").toString();
+}
+
+void ClockWidget::reloadWeatherSettings()
+{
+    // 重新加载天气设置
+    loadWeatherSettings();
+    // 立即更新天气数据
+    updateWeatherData();
 }

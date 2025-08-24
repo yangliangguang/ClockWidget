@@ -24,6 +24,9 @@ class ClockWidget : public QWidget
 public:
     explicit ClockWidget(QWidget* parent = nullptr);
     ~ClockWidget();
+    
+    // 重新加载设置并更新天气数据
+    void reloadWeatherSettings();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -48,6 +51,8 @@ private slots:
     void hideWeatherBrowser();
 
 private:
+    void loadWeatherSettings();
+    QString getCityCodeFromSettings();
     QTimer* m_timer;
     QString dayOfWeekCn(int dow) const;
     bool m_dragging = false;

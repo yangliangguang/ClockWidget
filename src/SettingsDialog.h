@@ -11,6 +11,7 @@
 #include <QSettings>
 #include <QTimeEdit>
 #include <QTime>
+#include <QLineEdit>
 
 class SettingsDialog : public QDialog
 {
@@ -37,6 +38,12 @@ private:
     QPushButton *m_okButton;
     QPushButton *m_cancelButton;
     QGroupBox *m_startupGroup;
+    
+    // 天气设置
+    QGroupBox *m_weatherGroup;
+    QLineEdit *m_cityCodeEdit;
+    QLabel *m_cityCodeLabel;
+    QLabel *m_cityCodeHintLabel;
 };
 
 #endif // SETTINGSDIALOG_H

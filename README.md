@@ -1,4 +1,5 @@
 # ClockWidget
+<img width="488" height="488" alt="image" src="https://github.com/user-attachments/assets/8314f08d-91bc-4726-b60e-b38f523e6b9a" />
 
 A Qt-based desktop clock widget application.
 

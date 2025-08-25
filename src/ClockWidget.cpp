@@ -582,6 +582,7 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
     QAction* traeCnAction = menu.addAction(style()->standardIcon(QStyle::SP_FileDialogStart), QStringLiteral("打开Trae CN"));
     QAction* videoAction = menu.addAction(style()->standardIcon(QStyle::SP_MediaPlay), QStringLiteral("打开视频"));
     QAction* yuanbaoAction = menu.addAction(style()->standardIcon(QStyle::SP_DialogYesButton), QStringLiteral("打开元宝"));
+    QAction* proxyAction = menu.addAction(style()->standardIcon(QStyle::SP_ComputerIcon), QStringLiteral("打开代理"));
     menu.addSeparator();
     QAction* settingsAction = menu.addAction(style()->standardIcon(QStyle::SP_FileDialogDetailedView), QStringLiteral("设置"));
     QAction* shutdownAction = menu.addAction(style()->standardIcon(QStyle::SP_TitleBarCloseButton), QStringLiteral("关闭电脑"));
@@ -735,6 +736,28 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
         } else {
             QMessageBox::warning(this, QStringLiteral("错误"), 
                                QStringLiteral("找不到腾讯元宝程序。\n路径：D:\\Program Files\\Tencent\\Yuanbao\\yuanbao.exe"));
+        }
+    });
+    
+    connect(proxyAction, &QAction::triggered, [this]() {
+        QString proxyPath = "D:\\Clash Verge\\Clash Verge.exe";
+        QFileInfo fileInfo(proxyPath);
+        
+        if (fileInfo.exists() && fileInfo.isExecutable()) {
+            bool success = QDesktopServices::openUrl(QUrl::fromLocalFile(proxyPath));
+            
+            if (!success) {
+                QProcess process;
+                success = process.startDetached(proxyPath);
+            }
+            
+            if (!success) {
+                QMessageBox::warning(this, QStringLiteral("错误"), 
+                                   QStringLiteral("无法启动Clash Verge代理程序。\n请检查程序是否正常安装。"));
+            }
+        } else {
+            QMessageBox::warning(this, QStringLiteral("错误"), 
+                               QStringLiteral("找不到Clash Verge代理程序。\n路径：D:\\Clash Verge\\Clash Verge.exe"));
         }
     });
     

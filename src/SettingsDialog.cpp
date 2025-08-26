@@ -11,9 +11,11 @@
 SettingsDialog::SettingsDialog(QWidget *parent)
     : QDialog(parent)
     , m_autoStartCheckBox(nullptr)
+    , m_alwaysOnTopCheckBox(nullptr)
     , m_okButton(nullptr)
     , m_cancelButton(nullptr)
     , m_startupGroup(nullptr)
+    , m_displayGroup(nullptr)
     , m_weatherGroup(nullptr)
     , m_cityCodeEdit(nullptr)
     , m_cityCodeLabel(nullptr)
@@ -25,6 +27,27 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     
     setupUI();
     loadSettings();
+}
+
+SettingsDialog::SettingsDialog(bool currentAlwaysOnTop, QWidget *parent)
+    : QDialog(parent)
+    , m_autoStartCheckBox(nullptr)
+    , m_alwaysOnTopCheckBox(nullptr)
+    , m_okButton(nullptr)
+    , m_cancelButton(nullptr)
+    , m_startupGroup(nullptr)
+    , m_displayGroup(nullptr)
+    , m_weatherGroup(nullptr)
+    , m_cityCodeEdit(nullptr)
+    , m_cityCodeLabel(nullptr)
+    , m_cityCodeHintLabel(nullptr)
+{
+    setWindowTitle(QStringLiteral("设置"));
+    setFixedSize(450, 280);
+    setModal(true);
+    
+    setupUI();
+    loadSettings(currentAlwaysOnTop);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -43,6 +66,15 @@ void SettingsDialog::setupUI()
     startupLayout->addWidget(m_autoStartCheckBox);
     
     mainLayout->addWidget(m_startupGroup);
+    
+    // 显示设置组
+    m_displayGroup = new QGroupBox(QStringLiteral("显示设置"), this);
+    QVBoxLayout *displayLayout = new QVBoxLayout(m_displayGroup);
+    
+    m_alwaysOnTopCheckBox = new QCheckBox(QStringLiteral("窗口置顶"), this);
+    displayLayout->addWidget(m_alwaysOnTopCheckBox);
+    
+    mainLayout->addWidget(m_displayGroup);
     
     // 天气设置组
     m_weatherGroup = new QGroupBox(QStringLiteral("天气设置"), this);
@@ -77,6 +109,7 @@ void SettingsDialog::setupUI()
     connect(m_okButton, &QPushButton::clicked, this, &SettingsDialog::onOkClicked);
     connect(m_cancelButton, &QPushButton::clicked, this, &SettingsDialog::onCancelClicked);
     connect(m_autoStartCheckBox, &QCheckBox::toggled, this, &SettingsDialog::onAutoStartChanged);
+    connect(m_alwaysOnTopCheckBox, &QCheckBox::toggled, this, &SettingsDialog::onAlwaysOnTopChanged);
 }
 
 void SettingsDialog::loadSettings()
@@ -84,6 +117,25 @@ void SettingsDialog::loadSettings()
     // 检查当前开机自启动状态
     bool autoStartEnabled = isAutoStartEnabled();
     m_autoStartCheckBox->setChecked(autoStartEnabled);
+    
+    // 加载置顶设置
+    QSettings settings;
+    bool alwaysOnTop = settings.value("display/alwaysOnTop", false).toBool();
+    m_alwaysOnTopCheckBox->setChecked(alwaysOnTop);
+    
+    // 加载天气城市编码设置
+    QString cityCode = settings.value("weather/cityCode", "101210408").toString(); // 默认杭州
+    m_cityCodeEdit->setText(cityCode);
+}
+
+void SettingsDialog::loadSettings(bool currentAlwaysOnTop)
+{
+    // 检查当前开机自启动状态
+    bool autoStartEnabled = isAutoStartEnabled();
+    m_autoStartCheckBox->setChecked(autoStartEnabled);
+    
+    // 使用传入的当前置顶状态而不是从配置文件读取
+    m_alwaysOnTopCheckBox->setChecked(currentAlwaysOnTop);
     
     // 加载天气城市编码设置
     QSettings settings;
@@ -97,8 +149,12 @@ void SettingsDialog::saveSettings()
     bool autoStart = m_autoStartCheckBox->isChecked();
     setAutoStart(autoStart);
     
-    // 保存天气城市编码设置
+    // 保存置顶设置
     QSettings settings;
+    bool alwaysOnTop = m_alwaysOnTopCheckBox->isChecked();
+    settings.setValue("display/alwaysOnTop", alwaysOnTop);
+    
+    // 保存天气城市编码设置
     QString cityCode = m_cityCodeEdit->text().trimmed();
     if (cityCode.isEmpty()) {
         cityCode = "101210408"; // 默认杭州
@@ -122,6 +178,12 @@ void SettingsDialog::onAutoStartChanged(bool checked)
 {
     Q_UNUSED(checked)
     // 可以在这里添加实时预览逻辑
+}
+
+void SettingsDialog::onAlwaysOnTopChanged(bool checked)
+{
+    // 发射信号通知ClockWidget置顶设置变化
+    emit alwaysOnTopChanged(checked);
 }
 
 bool SettingsDialog::isAutoStartEnabled()

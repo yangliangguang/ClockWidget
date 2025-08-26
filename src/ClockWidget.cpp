@@ -33,6 +33,7 @@
 #include <QHBoxLayout>
 #include <QSvgRenderer>
 #include <QFileInfo>
+#include <QDebug>
 
 ClockWidget::ClockWidget(QWidget* parent)
     : QWidget(parent), m_timer(new QTimer(this))
@@ -67,6 +68,9 @@ ClockWidget::ClockWidget(QWidget* parent)
     
     // 初始化天气相关
     loadWeatherSettings();
+    
+    // 注释掉构造函数中的置顶设置加载，避免在构造期间设置窗口标志
+    // loadAlwaysOnTopSetting();
     
     // 创建天气浏览器组件
     m_weatherBrowser = new QTextBrowser(this);
@@ -762,7 +766,8 @@ void ClockWidget::contextMenuEvent(QContextMenuEvent* event)
     });
     
     connect(settingsAction, &QAction::triggered, [this]() {
-        SettingsDialog dialog(this);
+        SettingsDialog dialog(isAlwaysOnTop(), this);
+        connect(&dialog, &SettingsDialog::alwaysOnTopChanged, this, &ClockWidget::setAlwaysOnTop);
         if (dialog.exec() == QDialog::Accepted) {
             reloadWeatherSettings();
         }
@@ -948,9 +953,11 @@ void ClockWidget::createTrayMenu()
     
     m_settingsAction = new QAction(style()->standardIcon(QStyle::SP_FileDialogDetailedView), tr("设置"), this);
     connect(m_settingsAction, &QAction::triggered, [this]() {
-        SettingsDialog dialog(this);
+        SettingsDialog dialog(isAlwaysOnTop(), this);
+        connect(&dialog, &SettingsDialog::alwaysOnTopChanged, this, &ClockWidget::setAlwaysOnTop);
         if (dialog.exec() == QDialog::Accepted) {
             reloadWeatherSettings();
+            loadAlwaysOnTopSetting();
         }
     });
     
@@ -1164,4 +1171,43 @@ void ClockWidget::reloadWeatherSettings()
     loadWeatherSettings();
     // 立即更新天气数据
     updateWeatherData();
+}
+
+void ClockWidget::loadAlwaysOnTopSetting()
+{
+    QSettings settings;
+    bool alwaysOnTop = settings.value("display/alwaysOnTop", false).toBool();
+    setAlwaysOnTop(alwaysOnTop);
+}
+
+void ClockWidget::setAlwaysOnTop(bool alwaysOnTop)
+{
+    // 保存当前窗口状态
+    bool wasVisible = isVisible();
+    QPoint oldPos = pos();
+    QSize oldSize = size();
+    
+    Qt::WindowFlags flags = windowFlags();
+    if (alwaysOnTop) {
+        flags |= Qt::WindowStaysOnTopHint;
+    } else {
+        flags &= ~Qt::WindowStaysOnTopHint;
+    }
+    
+    // 设置新的窗口标志
+    setWindowFlags(flags);
+    
+    // 恢复窗口状态
+    if (wasVisible) {
+        move(oldPos);
+        resize(oldSize);
+        show();
+        raise();
+        activateWindow();
+    }
+}
+
+bool ClockWidget::isAlwaysOnTop() const
+{
+    return windowFlags() & Qt::WindowStaysOnTopHint;
 }

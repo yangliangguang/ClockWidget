@@ -27,6 +27,13 @@ public:
     
     // 重新加载设置并更新天气数据
     void reloadWeatherSettings();
+    
+    // 置顶功能
+    void loadAlwaysOnTopSetting();
+    
+private:
+    void setAlwaysOnTop(bool alwaysOnTop);
+    bool isAlwaysOnTop() const;
 
 protected:
     void paintEvent(QPaintEvent* event) override;
